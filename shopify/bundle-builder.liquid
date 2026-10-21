@@ -1,0 +1,756 @@
+
+<section
+  id="BundleBuilder-{{ section.id }}"
+  class="bundle-builder"
+  data-section-id="{{ section.id }}"
+  data-currency="{{ cart.currency.iso_code | default: shop.currency }}"
+  data-money-format="{{ shop.money_format | escape }}"
+  data-bundle-name="{{ section.settings.heading | escape }}"
+>
+  <div class="bundle-builder__container">
+    <header class="bundle-builder__header">
+      {% if section.settings.eyebrow != blank %}
+        <p class="bundle-builder__eyebrow">
+          {{ section.settings.eyebrow | escape }}
+        </p>
+      {% endif %}
+
+      <h2>{{ section.settings.heading | escape }}</h2>
+
+      {% if section.settings.description != blank %}
+        <div class="bundle-builder__description">
+          {{ section.settings.description }}
+        </div>
+      {% endif %}
+    </header>
+
+    <div class="bundle-builder__groups">
+      {% for group_number in (1..3) %}
+        {% liquid
+          assign group_key = 'group_' | append: group_number
+          assign heading_key = group_key | append: '_heading'
+          assign source_key = group_key | append: '_source'
+          assign collection_key = group_key | append: '_collection'
+          assign products_key = group_key | append: '_products'
+          assign limit_key = group_key | append: '_limit'
+
+          assign group_heading = section.settings[heading_key]
+          assign group_source = section.settings[source_key]
+          assign group_products = section.settings[products_key]
+          assign group_limit = section.settings[limit_key]
+          assign selected_collection = section.settings[collection_key]
+
+          if group_limit == blank
+            assign group_limit = 8
+          endif
+
+          if group_source == 'collection' and selected_collection != blank
+            assign group_products = selected_collection.products
+          endif
+        %}
+
+        {% if group_products != blank %}
+          <fieldset
+            class="bundle-builder__group"
+            data-group="{{ group_key }}"
+            data-group-heading="{{ group_heading | escape }}"
+          >
+            <legend class="bundle-builder__group-heading">
+              <span class="bundle-builder__step">{{ group_number }}</span>
+              {{ group_heading | escape }}
+            </legend>
+
+            <div class="bundle-builder__products">
+              {% for product in group_products limit: group_limit %}
+                {% assign variant = product.selected_or_first_available_variant %}
+
+                {% if variant != blank %}
+                  <label class="bundle-builder__option{% unless variant.available %} is-sold-out{% endunless %}">
+                    <input
+                      type="radio"
+                      name="bundle-{{ section.id }}-{{ group_key }}"
+                      value="{{ variant.id }}"
+                      data-group="{{ group_key }}"
+                      data-price="{{ variant.price }}"
+                      data-available="{{ variant.available }}"
+                      data-product-title="{{ product.title | escape }}"
+                      data-variant-title="{{ variant.title | escape }}"
+                      {% unless variant.available %}disabled{% endunless %}
+                    >
+
+                    <span class="bundle-builder__card">
+                      {% if product.featured_image %}
+                        {{
+                          product.featured_image
+                          | image_url: width: 480
+                          | image_tag:
+                            loading: 'lazy',
+                            class: 'bundle-builder__image',
+                            alt: product.title
+                        }}
+                      {% endif %}
+
+                      <span class="bundle-builder__option-info">
+                        <span class="bundle-builder__product-title">
+                          {{ product.title | escape }}
+                        </span>
+
+                        {% unless variant.title == 'Default Title' %}
+                          <span class="bundle-builder__variant-title">
+                            {{ variant.title | escape }}
+                          </span>
+                        {% endunless %}
+
+                        <span class="bundle-builder__price">
+                          {{ variant.price | money }}
+                        </span>
+
+                        {% unless variant.available %}
+                          <span class="bundle-builder__sold-out">
+                            Sold out
+                          </span>
+                        {% endunless %}
+                      </span>
+                    </span>
+                  </label>
+                {% endif %}
+              {% endfor %}
+            </div>
+          </fieldset>
+        {% else %}
+          <div class="bundle-builder__empty" role="status">
+            <strong>{{ group_heading | escape }}</strong>
+            <p>
+              Select products or a collection for this group in the theme editor.
+            </p>
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    <div class="bundle-builder__summary">
+      <div class="bundle-builder__summary-info">
+        <p class="bundle-builder__summary-label">
+          {{ section.settings.total_label | escape }}
+        </p>
+
+        <p class="bundle-builder__total" data-bundle-total aria-live="polite">
+          {{ 0 | money }}
+        </p>
+
+        <p class="bundle-builder__status" data-bundle-status aria-live="polite">
+          Select one item from each group.
+        </p>
+
+        <a
+          class="bundle-builder__cart-link"
+          href="{{ routes.cart_url }}"
+          data-bundle-cart-link
+          hidden
+        >
+          View cart
+        </a>
+      </div>
+
+      <button
+        type="button"
+        class="bundle-builder__add-button"
+        data-bundle-add
+        disabled
+      >
+        Add bundle to cart
+      </button>
+    </div>
+  </div>
+</section>
+
+<style>
+.content-for-layout>.shopify-section{position:relative}
+  #BundleBuilder-{{ section.id }} {
+    padding: 56px 24px;
+    color: rgb(var(--color-foreground, 30 30 30));
+  }
+
+  #BundleBuilder-{{ section.id }} .bundle-builder__container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  #BundleBuilder-{{ section.id }} .bundle-builder__header {
+    margin-bottom: 36px;
+    text-align: center;
+  }
+
+  #BundleBuilder-{{ section.id }} .bundle-builder__eyebrow {
+    margin: 0 0 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 12px;
+  }
+
+  #BundleBuilder-{{ section.id }} .bundle-builder__header h2 {
+    margin: 0;
+    font-size: clamp(28px, 4vw, 44px);
+  }
+
+  #BundleBuilder-{{ section.id }} .bundle-builder__description {
+    margin: 12px auto 0;
+    max-width: 640px;
+  }
+
+  #BundleBuilder-{{ section.id }} .bundle-builder__group {
+    min-width: 0;
+    padding: 0;
+    margin: 0 0 36px;
+    border: 0;
+  }
+
+  #BundleBuilder-{{ section.id }} .bundle-builder__group-heading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+    font-size: 22px;
+    font-weight: 600;
+  }
+
+  #BundleBuilder-{{ section.id }} .bundle-builder__step {
+    display: inline-grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    font-size: 15px;
+  }
+
+  #BundleBuilder-{{ section.id }} .bundle-builder__products {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+  }
+
+  #BundleBuilder-{{ section.id }} .bundle-builder__option {
+    display: block;
+    cursor: pointer;
+  }
+
+  #BundleBuilder-{{ section.id }} .bundle-builder__option > input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  #BundleBuilder-{{ section.id }} .bundle-builder__card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    border: 1px solid rgba(var(--color-foreground, 30 30 30), 0.18);
+    border-radius: 10px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  #BundleBuilder-{{ section.id }} .bundle-builder__image {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+  }
+
+  #BundleBuilder-{{ section.id }} .bundle-builder__option-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 16px;
+  }
+
+  #BundleBuilder-{{ section.id }} .bundle-builder__product-title {
+    font-weight: 600;
+  }
+
+  #BundleBuilder-{{ section.id }} .bundle-builder__variant-title {
+    font-size: 13px;
+    opacity: 0.75;
+  }
+
+  #BundleBuilder-{{ section.id }} .bundle-builder__price {
+    font-size: 15px;
+  }
+
+  #BundleBuilder-{{ section.id }} .bundle-builder__option > input:checked + .bundle-builder__card {
+    border: 2px solid currentColor;
+    box-shadow: 0 0 0 2px rgba(var(--color-foreground, 30 30 30), 0.08);
+  }
+
+  #BundleBuilder-{{ section.id }} .bundle-builder__option > input:focus-visible + .bundle-builder__card {
+    outline: 2px solid currentColor;
+    outline-offset: 3px;
+  }
+
+  #BundleBuilder-{{ section.id }} .bundle-builder__option.is-sold-out {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+
+  #BundleBuilder-{{ section.id }} .bundle-builder__sold-out {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  #BundleBuilder-{{ section.id }} .bundle-builder__empty {
+    margin-bottom: 36px;
+    padding: 20px;
+    border: 1px dashed rgba(var(--color-foreground, 30 30 30), 0.35);
+    border-radius: 10px;
+  }
+
+  #BundleBuilder-{{ section.id }} .bundle-builder__empty p {
+    margin: 8px 0 0;
+  }
+
+  #BundleBuilder-{{ section.id }} .bundle-builder__summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 24px;
+    border: 1px solid rgba(var(--color-foreground, 30 30 30), 0.18);
+    border-radius: 12px;
+  }
+
+  #BundleBuilder-{{ section.id }} .bundle-builder__summary-label,
+  #BundleBuilder-{{ section.id }} .bundle-builder__total,
+  #BundleBuilder-{{ section.id }} .bundle-builder__status {
+    margin: 0;
+  }
+
+  #BundleBuilder-{{ section.id }} .bundle-builder__total {
+    margin-top: 4px;
+    font-size: 28px;
+    font-weight: 700;
+  }
+
+  #BundleBuilder-{{ section.id }} .bundle-builder__status {
+    margin-top: 6px;
+    font-size: 13px;
+  }
+
+  #BundleBuilder-{{ section.id }} .bundle-builder__add-button {
+    min-height: 48px;
+    padding: 12px 24px;
+    border: 1px solid rgb(var(--color-foreground, 30 30 30));
+    border-radius: 6px;
+    background: rgb(var(--color-foreground, 30 30 30));
+    color: rgb(var(--color-background, 255 255 255));
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+
+  #BundleBuilder-{{ section.id }} .bundle-builder__add-button:hover:not(:disabled) {
+    opacity: 0.82;
+  }
+
+  #BundleBuilder-{{ section.id }} .bundle-builder__add-button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  #BundleBuilder-{{ section.id }} .bundle-builder__cart-link {
+    display: inline-block;
+    margin-top: 10px;
+    text-decoration: underline;
+  }
+
+  #BundleBuilder-{{ section.id }} [hidden] {
+    display: none !important;
+  }
+
+  @media screen and (max-width: 749px) {
+    #BundleBuilder-{{ section.id }} {
+      padding: 36px 16px;
+    }
+
+    #BundleBuilder-{{ section.id }} .bundle-builder__products {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    #BundleBuilder-{{ section.id }} .bundle-builder__option-info {
+      padding: 12px;
+    }
+
+    #BundleBuilder-{{ section.id }} .bundle-builder__summary {
+      align-items: stretch;
+      flex-direction: column;
+      padding: 18px;
+    }
+
+    #BundleBuilder-{{ section.id }} .bundle-builder__add-button {
+      width: 100%;
+    }
+  }
+</style>
+
+<script>
+  (() => {
+    const root = document.getElementById('BundleBuilder-{{ section.id }}');
+
+    if (!root || root.dataset.initialized === 'true') return;
+    root.dataset.initialized = 'true';
+
+    const groups = [
+      ...root.querySelectorAll('.bundle-builder__group[data-group]')
+    ];
+    const radios = [
+      ...root.querySelectorAll('input[type="radio"][data-group]')
+    ];
+    const total = root.querySelector('[data-bundle-total]');
+    const status = root.querySelector('[data-bundle-status]');
+    const addButton = root.querySelector('[data-bundle-add]');
+    const cartLink = root.querySelector('[data-bundle-cart-link]');
+
+    const originalButtonText = addButton.textContent.trim();
+    let isAdding = false;
+    let bundleSequence = 0;
+
+    const formatMoney = (cents) => {
+      if (window.Shopify && typeof window.Shopify.formatMoney === 'function') {
+        return window.Shopify.formatMoney(
+          cents,
+          root.dataset.moneyFormat || ''
+        );
+      }
+
+      return new Intl.NumberFormat(undefined, {
+        style: 'currency',
+        currency: root.dataset.currency || 'USD'
+      }).format(cents / 100);
+    };
+
+    const getSelected = () =>
+      groups.map((group) => {
+        const selected = group.querySelector(
+          'input[type="radio"]:checked'
+        );
+
+        return selected && !selected.disabled ? selected : null;
+      });
+
+    const update = () => {
+      const selected = getSelected();
+      const chosen = selected.filter(Boolean);
+      const allSelected = groups.length === 3 && chosen.length === 3;
+
+      const sum = chosen.reduce(
+        (value, input) => value + Number(input.dataset.price || 0),
+        0
+      );
+
+      total.textContent = formatMoney(sum);
+
+      if (!isAdding) {
+        addButton.disabled = !allSelected;
+      }
+
+     let feedbackMessage = ''
+     if (feedbackMessage) {
+        status.textContent = feedbackMessage;
+    } else if (allSelected) {
+        status.textContent = 'Your 3-pack bundle is ready.';
+    } else {
+        status.textContent =
+            'Choose one available item from each of the 3 groups.';
+    }
+    };
+
+    const addBundleToCart = async () => {
+      if (isAdding) return;
+
+      const selected = getSelected();
+
+      if (groups.length !== 3 || selected.length !== 3 || selected.some((item) => !item)) {
+        status.textContent = 'Please select one available product from each group.';
+        return;
+      }
+
+      const items = selected.map((input, index) => {
+        const group = groups[index];
+
+        return {
+          id: Number(input.value),
+          quantity: 1,
+          properties: {
+            '_Bundle ID': '',
+            'Bundle Name': root.dataset.bundleName || 'Custom Bundle',
+            'Bundle Group': group.dataset.groupHeading || `Group ${index + 1}`,
+            'Bundle Item': `${index + 1} of 3`
+          }
+        };
+      });
+
+      // A shared ID lets the cart identify the three lines as one bundle.
+      bundleSequence += 1;
+      const bundleId = [
+        'BB',
+        Date.now().toString(36),
+        bundleSequence.toString(36)
+      ].join('-');
+
+      items.forEach((item) => {
+        item.properties['_Bundle ID'] = bundleId;
+      });
+
+      isAdding = true;
+      addButton.disabled = true;
+      addButton.textContent = 'Adding bundle…';
+      cartLink.hidden = true;
+      status.textContent = 'Adding your three products to the cart…';
+
+      try {
+        const rootPath =
+          window.Shopify &&
+          window.Shopify.routes &&
+          window.Shopify.routes.root
+            ? window.Shopify.routes.root
+            : '/';
+
+        const response = await fetch(`${rootPath}cart/add.js`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json'
+          },
+          body: JSON.stringify({ items })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            result.description ||
+            result.message ||
+            'Shopify could not add the bundle to your cart.'
+          );
+        }
+
+        status.textContent = 'Your bundle was added to the cart successfully.';
+        addButton.textContent = 'Added to cart';
+        cartLink.hidden = false;
+      } catch (error) {
+            console.error('Bundle Builder cart error:', error);
+
+            feedbackMessage =
+                error.message ||
+                'Unable to add the bundle. Please check product availability and try again.';
+
+            status.textContent = feedbackMessage;
+            addButton.textContent = 'Try again';
+        } finally {
+            isAdding = false;
+            update();
+
+            if (cartLink.hidden) {
+                addButton.textContent = originalButtonText;
+            } else {
+                addButton.textContent = 'Add another bundle';
+            }
+        }
+    };
+
+    radios.forEach((radio) => {
+      radio.addEventListener('change', () => {
+        feedbackMessage = '';
+        cartLink.hidden = true;
+        addButton.textContent = originalButtonText;
+        update();
+      });
+    });
+
+    addButton.addEventListener('click', addBundleToCart);
+
+    groups.forEach((group) => {
+      const firstAvailable = group.querySelector(
+        'input[type="radio"]:not(:disabled)'
+      );
+
+      if (firstAvailable) {
+        firstAvailable.checked = true;
+      }
+    });
+
+    update();
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Bundle Builder",
+  "tag": "section",
+  "class": "bundle-builder-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "Build your own bundle"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Create your perfect bundle"
+    },
+    {
+      "type": "richtext",
+      "id": "description",
+      "label": "Description",
+      "default": "<p>Choose one product from each group to build your bundle.</p>"
+    },
+    {
+      "type": "text",
+      "id": "group_1_heading",
+      "label": "Group 1 heading",
+      "default": "Choose your first item"
+    },
+    {
+      "type": "select",
+      "id": "group_1_source",
+      "label": "Group 1 product source",
+      "options": [
+        {
+          "value": "products",
+          "label": "Specific products"
+        },
+        {
+          "value": "collection",
+          "label": "Collection"
+        }
+      ],
+      "default": "products"
+    },
+    {
+      "type": "collection",
+      "id": "group_1_collection",
+      "label": "Group 1 collection"
+    },
+    {
+      "type": "product_list",
+      "id": "group_1_products",
+      "label": "Group 1 specific products",
+      "limit": 10
+    },
+    {
+      "type": "range",
+      "id": "group_1_limit",
+      "label": "Group 1 maximum products to display",
+      "min": 1,
+      "max": 50,
+      "step": 1,
+      "default": 8
+    },
+    {
+      "type": "text",
+      "id": "group_2_heading",
+      "label": "Group 2 heading",
+      "default": "Choose your second item"
+    },
+    {
+      "type": "select",
+      "id": "group_2_source",
+      "label": "Group 2 product source",
+      "options": [
+        {
+          "value": "products",
+          "label": "Specific products"
+        },
+        {
+          "value": "collection",
+          "label": "Collection"
+        }
+      ],
+      "default": "products"
+    },
+    {
+      "type": "collection",
+      "id": "group_2_collection",
+      "label": "Group 2 collection"
+    },
+    {
+      "type": "product_list",
+      "id": "group_2_products",
+      "label": "Group 2 specific products",
+      "limit": 10
+    },
+    {
+      "type": "range",
+      "id": "group_2_limit",
+      "label": "Group 2 maximum products to display",
+      "min": 1,
+      "max": 50,
+      "step": 1,
+      "default": 8
+    },
+    {
+      "type": "text",
+      "id": "group_3_heading",
+      "label": "Group 3 heading",
+      "default": "Choose your third item"
+    },
+    {
+      "type": "select",
+      "id": "group_3_source",
+      "label": "Group 3 product source",
+      "options": [
+        {
+          "value": "products",
+          "label": "Specific products"
+        },
+        {
+          "value": "collection",
+          "label": "Collection"
+        }
+      ],
+      "default": "products"
+    },
+    {
+      "type": "collection",
+      "id": "group_3_collection",
+      "label": "Group 3 collection"
+    },
+    {
+      "type": "product_list",
+      "id": "group_3_products",
+      "label": "Group 3 specific products",
+      "limit": 10
+    },
+    {
+      "type": "range",
+      "id": "group_3_limit",
+      "label": "Group 3 maximum products to display",
+      "min": 1,
+      "max": 50,
+      "step": 1,
+      "default": 8
+    },
+    {
+      "type": "text",
+      "id": "total_label",
+      "label": "Total label",
+      "default": "Bundle total"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Bundle Builder"
+    }
+  ]
+}
+{% endschema %}
