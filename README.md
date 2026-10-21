@@ -5,14 +5,14 @@ This repository contains my implementations for the WordPress and Shopify tasks 
 Repository Structure
 
 ropstam-task/
-├── README.md
-├── shopify/
-│   └── bundle-builder.liquid
-└── wordpress/
-    └── ropstam-service-addon/
-        ├── ropstam-service-addon.php
-        ├── includes/
-        └── assets/
+ README.md
+ shopify/
+   bundle-builder.liquid
+ wordpress/
+    ropstam-service-addon/
+        ropstam-service-addon.php
+        includes/
+        assets/
 
 
 
