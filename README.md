@@ -2,27 +2,11 @@ Ropstam Senior CMS Developer Assignment
 
 This repository contains my implementations for the WordPress and Shopify tasks for the Senior CMS Developer position at Ropstam.
 
-Repository Structure
-
-ropstam-task/
- README.md
- shopify/
-   bundle-builder.liquid
- wordpress/
-    ropstam-service-addon/
-        ropstam-service-addon.php
-        includes/
-        assets/
-
-
-
-
-
- 1. WordPress — Service Add-on Calculator
+1. WordPress — Service Add-on Calculator
 
 Location: `wordpress/ropstam-service-addon/`
 
- Features
+Features
 
 - Registers and manages Services with configurable base prices and delivery times.
 - Supports service-specific metadata.
@@ -30,7 +14,7 @@ Location: `wordpress/ropstam-service-addon/`
 - Provides a client-side calculator that updates the estimated price when optional add-ons are selected.
 - Uses WordPress APIs and follows sanitization and output-escaping practices.
 
- Installation
+Installation
 
 1. Set up a working WordPress installation with PHP and a MySQL-compatible database.
 2. Copy the complete `ropstam-service-addon` directory into:
@@ -51,9 +35,7 @@ Testing Checklist
 - Verify the estimated price updates correctly.
 - Check the page on desktop and mobile layouts.
 
-
-
- 2. Shopify — Online Store 2.0 Bundle Builder
+2. Shopify — Online Store 2.0 Bundle Builder
 
 Location: `shopify/bundle-builder.liquid`
 
@@ -96,8 +78,5 @@ Testing Checklist
 Author
 
 Hammad Ali Nadeem
-
-Assignment
-
 Ropstam — Senior CMS Developer
 
